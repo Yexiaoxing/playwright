@@ -26,13 +26,14 @@ import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
+import EmptyReporter from './reporters/empty';
 import GitHubReporter from './reporters/github';
-import LineReporter from './reporters/line';
-import ListReporter from './reporters/list';
+import HtmlReporter from './reporters/html';
 import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
-import EmptyReporter from './reporters/empty';
-import HtmlReporter from './reporters/html';
+import LineReporter from './reporters/line';
+import ListReporter from './reporters/list';
+import NunitReporter from './reporters/nunit';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
@@ -101,7 +102,7 @@ export class Runner {
   }
 
   private async _createReporter(list: boolean) {
-    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
+    const defaultReporters: { [key in BuiltInReporter]: new (arg: any) => Reporter } = {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
       list: list ? ListModeReporter : ListReporter,
@@ -110,6 +111,7 @@ export class Runner {
       junit: JUnitReporter,
       null: EmptyReporter,
       html: HtmlReporter,
+      nunit: NunitReporter,
     };
     const reporters: Reporter[] = [];
     for (const r of this._loader.fullConfig().reporter) {
@@ -739,5 +741,5 @@ function createStacklessError(message: string): TestError {
   return { message };
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'nunit'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];

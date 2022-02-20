@@ -47,7 +47,7 @@ type TestSummary = {
   failuresToPrint: TestCase[];
 };
 
-export class BaseReporter implements Reporter  {
+export class BaseReporter implements Reporter {
   duration = 0;
   config!: FullConfig;
   suite!: Suite;
@@ -128,8 +128,8 @@ export class BaseReporter implements Reporter  {
     const fileDurations = [...this.fileDurations.entries()];
     fileDurations.sort((a, b) => b[1] - a[1]);
     const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
-    const threshold =  this.config.reportSlowTests.threshold;
-    return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
+    const threshold = this.config.reportSlowTests.threshold;
+    return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
   protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
@@ -225,7 +225,7 @@ export class BaseReporter implements Reporter  {
   }
 }
 
-export function formatFailure(config: FullConfig, test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean} = {}): {
+export function formatFailure(config: FullConfig, test: TestCase, options: { index?: number, includeStdio?: boolean, includeAttachments?: boolean } = {}): {
   message: string,
   annotations: Annotation[]
 } {
@@ -452,3 +452,50 @@ function fitToWidth(line: string, width: number, suffix?: string): string {
   // Truncate and reset all colors.
   return line.substr(0, width + ansiLen) + '\u001b[0m';
 }
+
+// #region XML serialization
+export type XMLEntry = {
+  name: string;
+  attributes?: { [key: string]: any };
+  children?: XMLEntry[];
+  text?: string;
+};
+
+
+export function serializeXML(entry: XMLEntry, stripANSIControlSequences: boolean) {
+  const tokens: string[] = [];
+
+  const attrs: string[] = [];
+  for (const [name, value] of Object.entries(entry.attributes || {}))
+    attrs.push(`${name}="${escapeXML(String(value), stripANSIControlSequences, false)}"`);
+  tokens.push(`<${entry.name}${attrs.length ? ' ' : ''}${attrs.join(' ')}>`);
+  for (const child of entry.children || [])
+    tokens.push(...serializeXML(child, stripANSIControlSequences));
+  if (entry.text)
+    tokens.push(escapeXML(entry.text, stripANSIControlSequences, true));
+  tokens.push(`</${entry.name}>`);
+
+  return tokens;
+}
+
+// See https://en.wikipedia.org/wiki/Valid_characters_in_XML
+const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
+
+export function escapeXML(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
+  if (stripANSIControlSequences)
+    text = stripAnsiEscapes(text);
+
+  if (text.startsWith('<!CDATA')) return text;
+
+  const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
+  text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
+  if (isCharacterData)
+    text = text.replace(/]]>/g, ']]&gt;');
+  text = text.replace(discouragedXMLCharacters, '');
+  return text;
+}
+
+export function cdata(text: string): string {
+  return `<!CDATA[${text}]]>`;
+}
+// #endregion

@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from '../util';
-import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
+import { formatFailure, formatTestTitle, serializeXML, stripAnsiEscapes, XMLEntry } from './base';
 
 class JUnitReporter implements Reporter {
   private config!: FullConfig;
@@ -54,8 +54,6 @@ class JUnitReporter implements Reporter {
       for (const fileSuite of projectSuite.suites)
         children.push(this._buildTestSuite(fileSuite));
     }
-    const tokens: string[] = [];
-
     const self = this;
     const root: XMLEntry = {
       name: 'testsuites',
@@ -71,7 +69,7 @@ class JUnitReporter implements Reporter {
       children
     };
 
-    serializeXML(root, tokens, this.stripANSIControlSequences);
+    const tokens: string[] = serializeXML(root, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
     if (this.outputFile) {
       fs.mkdirSync(path.dirname(this.outputFile), { recursive: true });
@@ -176,37 +174,5 @@ class JUnitReporter implements Reporter {
   }
 }
 
-type XMLEntry = {
-  name: string;
-  attributes?: { [name: string]: string | number | boolean };
-  children?: XMLEntry[];
-  text?: string;
-};
-
-function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequences: boolean) {
-  const attrs: string[] = [];
-  for (const [name, value] of Object.entries(entry.attributes || {}))
-    attrs.push(`${name}="${escape(String(value), stripANSIControlSequences, false)}"`);
-  tokens.push(`<${entry.name}${attrs.length ? ' ' : ''}${attrs.join(' ')}>`);
-  for (const child of entry.children || [])
-    serializeXML(child, tokens, stripANSIControlSequences);
-  if (entry.text)
-    tokens.push(escape(entry.text, stripANSIControlSequences, true));
-  tokens.push(`</${entry.name}>`);
-}
-
-// See https://en.wikipedia.org/wiki/Valid_characters_in_XML
-const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
-
-function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
-  if (stripANSIControlSequences)
-    text = stripAnsiEscapes(text);
-  const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
-  text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-  if (isCharacterData)
-    text = text.replace(/]]>/g, ']]&gt;');
-  text = text.replace(discouragedXMLCharacters, '');
-  return text;
-}
 
 export default JUnitReporter;
