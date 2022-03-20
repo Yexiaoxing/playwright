@@ -18,7 +18,7 @@ import { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/t
 import { cdata, formatFailure, formatTestTitle, serializeXML, stripAnsiEscapes, XMLEntry } from './base';
 
 import * as os from 'os';
-import { posix as path } from 'path';
+import * as path from 'path';
 import * as fs from 'fs';
 
 type TestResult = 'Passed' | 'Failed' | 'Inconclusive' | 'Skipped';
@@ -336,8 +336,8 @@ class NunitReporter implements Reporter {
           continue;
 
         try {
-          const outputFolder = path.dirname(this._outputFile);
-          const attachmentPath = path.relative(outputFolder, attachment.path);
+          // TODO: add option for absolute or relative?
+          const attachmentPath = attachment.path;
 
           if (fs.existsSync(attachment.path)) {
             systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
