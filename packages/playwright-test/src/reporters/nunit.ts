@@ -287,6 +287,7 @@ class NunitReporter implements Reporter {
       children.push(entry);
     });
 
+    // TODO: correct name?
     const fullname = suite.location ? path.relative(this._config.rootDir, suite.location.file) : '';
 
     const entry: NunitTestSuite = {
