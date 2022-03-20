@@ -35,16 +35,16 @@ test('should render expected', async ({ runInlineTest }) => {
   }, { reporter: 'nunit' });
 
   const xml = parseXML(result.output);
-  console.log(JSON.stringify(xml));
+
   expect(xml['test-run']['$']['total']).toBe('2');
   expect(xml['test-run']['$']['passed']).toBe('2');
   expect(xml['test-run']['$']['failed']).toBe('0');
-  expect(xml['test-run']['test-suite'].length).toBe(2);
-  expect(xml['test-run']['test-suite'][0]['$']['name']).toBe('a.test.js');
-  expect(xml['test-run']['test-suite'][0]['$']['tests']).toBe('1');
-  expect(xml['test-run']['test-suite'][0]['$']['failures']).toBe('0');
-  expect(xml['test-run']['test-suite'][0]['$']['skipped']).toBe('0');
-  expect(xml['test-run']['test-suite'][1]['$']['name']).toBe('b.test.js');
+  expect(xml['test-run']['test-suite'][0]['test-suite'][0]['test-suite'].length).toBe(2);
+  expect(xml['test-run']['test-suite'][0]['test-suite'][0]['test-suite'][0]['$']['name']).toBe('a.test.js');
+  expect(xml['test-run']['test-suite'][0]['test-suite'][0]['test-suite'][0]['$']['total']).toBe('1');
+  expect(xml['test-run']['test-suite'][0]['test-suite'][0]['test-suite'][0]['$']['failed']).toBe('0');
+  expect(xml['test-run']['test-suite'][0]['test-suite'][0]['test-suite'][0]['$']['skipped']).toBe('0');
+  expect(xml['test-run']['test-suite'][0]['test-suite'][0]['test-suite'][1]['$']['name']).toBe('b.test.js');
   expect(result.exitCode).toBe(0);
 });
 

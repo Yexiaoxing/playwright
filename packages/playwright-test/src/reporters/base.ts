@@ -485,7 +485,7 @@ export function escapeXML(text: string, stripANSIControlSequences: boolean, isCh
   if (stripANSIControlSequences)
     text = stripAnsiEscapes(text);
 
-  if (text.startsWith('<!CDATA')) return text;
+  if (text.startsWith('<![CDATA')) return text;
 
   const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
   text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
@@ -496,6 +496,6 @@ export function escapeXML(text: string, stripANSIControlSequences: boolean, isCh
 }
 
 export function cdata(text: string): string {
-  return `<!CDATA[${text}]]>`;
+  return `<![CDATA[${text}]]>`;
 }
 // #endregion
