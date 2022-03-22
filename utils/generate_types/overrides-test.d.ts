@@ -25,6 +25,7 @@ export type ReporterDescription =
   ['list'] |
   ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
+  ['nunit'] | ['nunit', { outputFile?: string, stripANSIControlSequences?: boolean, useAbsolutePathForAttachments?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' }] |
   ['null'] |

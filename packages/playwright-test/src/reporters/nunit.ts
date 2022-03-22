@@ -108,6 +108,7 @@ class NunitReporter implements Reporter {
   private _config!: FullConfig;
   private _suite!: Suite;
   private _stripANSIControlSequences = false;
+  private _useAbsolutePathForAttachments = false;
 
   private _outputFile: string | undefined;
   private _startTime: Date = new Date();
@@ -116,9 +117,10 @@ class NunitReporter implements Reporter {
   private _suiteIndex: number = 0;
   private _testCaseIndex: number = 0;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, useAbsolutePathForAttachments?: boolean } = {}) {
     this._outputFile = options.outputFile || process.env[`PLAYWRIGHT_NUNIT_OUTPUT_NAME`];
     this._stripANSIControlSequences = options.stripANSIControlSequences || false;
+    this._useAbsolutePathForAttachments = options.useAbsolutePathForAttachments || false;
   }
 
   printsToStdio() {
@@ -338,7 +340,12 @@ class NunitReporter implements Reporter {
 
         try {
           // TODO: add option for absolute or relative?
-          const attachmentPath = attachment.path;
+          let attachmentPath: string;
+          if (this._useAbsolutePathForAttachments)
+            attachmentPath  = attachment.path;
+          else
+            attachmentPath = path.relative(this._config.rootDir, attachment.path);
+
 
           if (fs.existsSync(attachment.path)) {
             systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
@@ -409,6 +416,8 @@ class NunitReporter implements Reporter {
 
 function outputReport(root: XMLEntry, outputFile: string | undefined, stripANSIControlSequences: boolean) {
   const tokens: string[] = serializeXML(root, stripANSIControlSequences);
+
+  tokens.splice(0,0, '<?xml version="1.0" encoding="utf-8"?>');
 
   const reportString = tokens.join('\n');
 
